@@ -1,0 +1,47 @@
+version: '3'
+services:
+  node:
+    container_name: node_prisma
+    image: node:22-alpine
+    volumes:
+      - ./:/app
+    working_dir: /app
+    ports:
+      - 5174:3000
+    command: >
+      sh -c "npm install && npm run dev"
+    restart: always
+    links:
+      - mysql
+  mysql:
+    container_name: mysql_prisma
+    build:
+      context: ./.docker/mysql
+      # args:
+      #   - MYSQL_VERSION=${MYSQL_VERSION}
+    environment:
+      # MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${PRISMA_USER_PASSWORD}
+      MYSQL_DATABASE: mydb
+      PRISMA_USER_NAME: ${PRISMA_USER_NAME}
+      PRISMA_USER_PASSWORD: ${PRISMA_USER_PASSWORD}
+      # MYSQL_USER: ${PRISMA_USER_NAME}
+      # MYSQL_PASSWORD: ${PRISMA_USER_PASSWORD}
+    ports:
+      # - ${PROD_DB_PORT}:3306
+      - 3306:3306
+    volumes:
+      - mysql_data:/var/lib/mysql
+    restart: always
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  # default:
+  #     name: node_prisma_default
+      # external: true
+  default:
+      name: custom_net
+      external: true
