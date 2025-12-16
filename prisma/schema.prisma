@@ -12,10 +12,25 @@ model User {
   name     String
   email    String? @unique
   password String
+
+  refreshToken RefreshToken[]
 }
 
 model RevokedToken {
-  id       Int      @id @default(autoincrement())
-  token    String
+  jti      String   @id @map("jti")
   expireAt DateTime
+}
+
+model RefreshToken {
+  id    Int    @id @default(autoincrement())
+  token String @unique
+
+  userId Int  @map("user_id")
+  user   User @relation(fields: [userId], references: [id])
+
+  revoked         Boolean @default(false)
+  replacedByToken String? @unique
+
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
 }
