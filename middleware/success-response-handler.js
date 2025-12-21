@@ -9,6 +9,7 @@ export const successResponseMiddleware = (req, res, next) => {
     const auth_paths = [
       '/api/auth/login',
       '/api/auth/register',
+      '/api/auth/refresh_token'
       // '' // refresh token route kyan ml
     ]
     const url_path = req.baseUrl + req.path

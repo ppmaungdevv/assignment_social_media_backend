@@ -1,7 +1,6 @@
 import CustomError from '../lib/custom-error.js';
 
 export const errorResponseMiddleware = (err, req, res, next) => {
-  console.log(err);
   const response = {
     status: 'error',
     message: 'Internal Server Error',
@@ -10,6 +9,7 @@ export const errorResponseMiddleware = (err, req, res, next) => {
   
   if (err instanceof CustomError) {
     response['message'] = err.message
+    response['code'] = err.code
     // response['error'] = err.isJson ? JSON.parse(err.error) : { error: err.error }
     if(err.isJson) {
       response['error'] = JSON.parse(err.error) 

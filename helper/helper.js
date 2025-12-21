@@ -24,7 +24,6 @@ export const getAccessTokenData = async ( payload, ttl = '60m' ) => {
   )
 
   const exp = new Date(Date.now() + (process.env.ATOKEN_LIFESPAN_MINS * 60 * 1000))
-  console.log(exp);
 
   return { token, exp }
 }
