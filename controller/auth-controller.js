@@ -3,7 +3,23 @@ import { prisma } from '../lib/prisma.js'
 import CustomError from '../lib/custom-error.js'
 import { getHashedPassword, compareHashedPassword, getAccessTokenData, getRefreshTokenData, getDataToRevoke } from '../helper/helper.js'
 
+const createRefreshToken = async (user_id) => {
+  const refresh_token_data = await getRefreshTokenData()
 
+  const refresh_token = await prisma.refreshToken.create({
+    data: { 
+      ...refresh_token_data,
+      user: {
+        connect : {
+          id: user_id
+        }
+      }
+    }
+  })
+
+  return refresh_token
+
+}
 
 export const register = async (req_data) => {
 
@@ -19,14 +35,25 @@ export const register = async (req_data) => {
     }
   })
 
+  const refresh_token = await createRefreshToken(user.id)
+
   const payload = {
     user_id: user.id,
     email: user.email
   }
 
-  const token = await getAccessTokenData(payload)
+  const access_token = await getAccessTokenData(payload)
 
-  return { token, user_id: user.id, user_name: user.name, email: user.email }
+  return { 
+    access_token: access_token.token,
+    access_token_exp: access_token.exp,
+    refresh_token: refresh_token.token, 
+    refresh_token_exp: refresh_token.expiresAt,
+    user_id: user.id, 
+    user_name: user.name, 
+    email: user.email 
+  }
+
 }
 
 export const login = async (req_data) => {
@@ -44,19 +71,7 @@ export const login = async (req_data) => {
     throw new CustomError({message: "Invalid credential", statusCode: 400, error: "Invalid credential"})
   }
 
-  const refresh_token_data = await getRefreshTokenData()
-
-
-  const refresh_token = await prisma.refreshToken.create({
-    data: { 
-      ...refresh_token_data,
-      user: {
-        connect : {
-          id: user.id
-        }
-      }
-    }
-  })
+  const refresh_token = await createRefreshToken(user.id)
 
   const payload = {
     user_id: user.id,
@@ -106,18 +121,20 @@ export const refershToken = async (req_data) => {
   }
 
   // issue a new refresh token
-  const refresh_token_data = await getRefreshTokenData()
+  // const refresh_token_data = await getRefreshTokenData()
 
-  const new_refresh_token = await prisma.refreshToken.create({
-    data: { 
-      ...refresh_token_data,
-      user: {
-        connect : {
-          id: session.user.id
-        }
-      }
-    }
-  })
+  // const new_refresh_token = await prisma.refreshToken.create({
+  //   data: { 
+  //     ...refresh_token_data,
+  //     user: {
+  //       connect : {
+  //         id: session.user.id
+  //       }
+  //     }
+  //   }
+  // })
+
+  const new_refresh_token = await createRefreshToken(session.user.id)
 
   // issue new access token
   const payload = {
@@ -147,17 +164,29 @@ export const refershToken = async (req_data) => {
 }
 
 export const logout = async (req_data) => {
-  const token = req_data.authorization && req_data.authorization.split(' ')[1]
-
+  const token = req_data.headers.authorization && req_data.headers.authorization.split(' ')[1]
   const { jti, expires_at } = await getDataToRevoke(token)
 
-  const revoked = await prisma.revokedToken.create({
+  const refresh_token = req_data.cookies.refresh_token
+  
+
+  // revoke access token
+  const revoked_at = await prisma.revokedToken.create({
     data: {
       jti,
       expireAt: expires_at
     }
   })
 
-  console.log(revoked);
+  // revoke refresh token
+  const revoked_rt = await prisma.refreshToken.update({
+    where: {
+      token: refresh_token
+    },
+    data: {
+      revoked: true,
+    }
+  })
+  console.log('test');
 
 }

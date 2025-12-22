@@ -6,7 +6,7 @@ export const errorResponseMiddleware = (err, req, res, next) => {
     message: 'Internal Server Error',
     data: null
   }
-  
+  console.log(err);
   if (err instanceof CustomError) {
     response['message'] = err.message
     response['code'] = err.code
