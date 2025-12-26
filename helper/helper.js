@@ -44,7 +44,14 @@ export const getRefreshTokenData = async () => {
 }
 
 export const getDataToRevoke = async (token) => {
-  const { jti, exp } = jwt.decode(token)
+  const { jti, exp } = await getDataFromToken(token)
   const expires_at = new Date(exp * 1000);
   return { jti, expires_at }
+}
+
+export const getDataFromToken = async (token) => {
+  const token_data = jwt.decode(token)
+
+  return token_data
+
 }

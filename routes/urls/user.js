@@ -1,0 +1,6 @@
+export const user_urls = {
+  profile: '/user/profile',
+  // register: '/auth/register',
+  // refresh_token: '/auth/refresh_token',
+  // logout: '/auth/logout'
+}
